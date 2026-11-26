@@ -39,13 +39,16 @@
 <body class="min-h-screen flex flex-col items-center justify-center p-4 text-slate-800">
 
   <!-- HEADER NHỎ -->
-  <div class="w-full max-w-md flex items-center justify-between mb-4">
-    <div class="flex items-center gap-2">
-      <div class="w-10 h-10 bg-amber-400 border-3 border-slate-800 rounded-xl shadow-[0_3px_0_#1E293B] flex items-center justify-center text-xl">🎨</div>
-      <span class="font-toon text-2xl font-extrabold">Toon<span class="text-orange-500">Quiz</span></span>
+  <div class="w-full max-w-6xl flex items-center justify-between mb-4">
+    <div class="flex items-center gap-2.5">
+      <div class="w-11 h-11 bg-amber-400 border-3 border-slate-800 rounded-2xl shadow-[0_3px_0_#1E293B] flex items-center justify-center text-2xl">🎨</div>
+      <div>
+        <span class="font-toon text-2xl sm:text-3xl font-extrabold leading-none block">Toon<span class="text-orange-500">Quiz</span></span>
+        <span class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Chơi Trực Tiếp (Kahoot)</span>
+      </div>
     </div>
-    <div id="player-badge" class="hidden bg-white border-2 border-slate-800 px-3 py-1 rounded-full text-xs font-extrabold shadow-[0_2px_0_#1E293B] flex items-center gap-1.5">
-      <span id="badge-avatar">🦊</span>
+    <div id="player-badge" class="hidden bg-white border-3 border-slate-800 px-3.5 py-1.5 rounded-2xl text-sm font-extrabold shadow-[0_3px_0_#1E293B] flex items-center gap-2">
+      <span id="badge-avatar" class="text-lg">🦊</span>
       <span id="badge-name">Player</span>
       <span class="text-indigo-600 ml-1" id="badge-score">0đ</span>
     </div>
@@ -93,61 +96,100 @@
     </div>
   </section>
 
-  <!-- 3. MÀN HÌNH TRẢ LỜI CÂU HỎI -->
-  <section id="step-question" class="hidden w-full max-w-md space-y-4">
-    <div class="toon-card bg-white p-4">
-      <div class="flex items-center justify-between mb-2">
-        <span id="q-progress" class="bg-indigo-500 text-white font-toon text-sm px-3 py-1 rounded-lg border-2 border-slate-800">Câu 1 / 5</span>
-        <span id="q-timer-text" class="font-toon text-2xl font-extrabold text-emerald-600">15s</span>
+  <!-- 3. MÀN HÌNH TRẢ LỜI CÂU HỎI (GIỐNG MÀN HÌNH CHƠI CHÍNH) -->
+  <section id="step-question" class="hidden w-full max-w-6xl space-y-4">
+    <!-- Thanh thông tin trên -->
+    <div class="bg-white border-3 border-slate-800 rounded-2xl shadow-[0_5px_0_#1E293B] px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-2.5">
+        <span id="q-progress" class="bg-indigo-500 text-white font-toon text-base sm:text-lg px-3.5 py-1 rounded-xl border-2 border-slate-800 shadow-[0_2px_0_#1E293B]">Câu 1 / 3</span>
+        <div class="bg-amber-100 border-2 border-slate-800 px-3 py-1 rounded-xl font-extrabold text-slate-800 text-sm sm:text-base">
+          Điểm: <span id="q-current-score" class="text-orange-600">0</span>
+        </div>
       </div>
-      <div class="w-full h-3 bg-slate-200 border-2 border-slate-800 rounded-full overflow-hidden mb-3">
-        <div id="q-timer-bar" class="h-full bg-emerald-400 transition-all duration-100 linear" style="width: 100%"></div>
+
+      <div class="flex items-center gap-2 bg-emerald-100 border-3 border-slate-800 px-4 py-1 rounded-2xl shadow-[0_3px_0_#1E293B]">
+        <i class="fa-solid fa-stopwatch text-emerald-600 text-lg"></i>
+        <span class="text-xs font-extrabold uppercase text-slate-600 hidden sm:inline">Thời gian:</span>
+        <span id="q-timer-text" class="font-toon text-2xl sm:text-3xl font-extrabold text-emerald-700 leading-none">15s</span>
       </div>
-      <div id="q-img-wrap" class="hidden w-full h-40 sm:h-48 bg-slate-100 border-2 border-slate-800 rounded-xl overflow-hidden flex items-center justify-center mb-3">
-        <img id="q-sample-img" src="" alt="Hình mẫu" class="w-full h-full object-contain p-1" />
+
+      <div id="q-locked-banner" class="hidden bg-indigo-100 border-2 border-slate-800 rounded-xl px-3 py-1 text-xs sm:text-sm font-extrabold text-indigo-900">
+        🔒 Đã khóa đáp án! Chờ hết giờ...
       </div>
-      <h2 id="q-title" class="font-toon text-xl font-extrabold text-slate-800 leading-snug"></h2>
     </div>
 
-    <div id="q-locked-banner" class="hidden bg-indigo-100 border-3 border-slate-800 rounded-2xl p-4 text-center font-extrabold text-indigo-900">
-      🔒 Đã ghi nhận đáp án! Chờ hết giờ để xem kết quả...
+    <!-- Thanh tiến trình đếm ngược -->
+    <div class="w-full h-4 sm:h-5 bg-slate-200 border-3 border-slate-800 rounded-full overflow-hidden shadow-[0_3px_0_#1E293B]">
+      <div id="q-timer-bar" class="h-full bg-emerald-400 transition-all duration-100 linear" style="width: 100%"></div>
     </div>
 
-    <div id="q-options" class="grid grid-cols-1 gap-3"></div>
+    <!-- Bố cục 2 cột giống hệt giao diện chính -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+      <!-- Cột Trái: Hình mẫu & Câu hỏi -->
+      <div class="lg:col-span-6 toon-card p-5 bg-white flex flex-col justify-between">
+        <div>
+          <div class="inline-flex items-center gap-1.5 bg-sky-100 border-2 border-slate-800 px-3 py-1 rounded-lg text-xs font-extrabold text-sky-900 mb-3">
+            <i class="fa-solid fa-image"></i> HÌNH MẪU QUAN SÁT
+          </div>
+          <div id="q-img-wrap" class="hidden w-full h-56 sm:h-64 bg-slate-100 border-3 border-slate-800 rounded-2xl overflow-hidden flex items-center justify-center mb-4">
+            <img id="q-sample-img" src="" alt="Hình mẫu" class="w-full h-full object-contain p-2" />
+          </div>
+        </div>
+        <div class="bg-amber-50 border-3 border-slate-800 rounded-2xl p-4">
+          <h2 id="q-title" class="font-toon text-xl sm:text-2xl font-extrabold text-slate-800 leading-snug"></h2>
+        </div>
+      </div>
+
+      <!-- Cột Phải: 4 Nút Đáp Án nền trắng chữ đậm rõ ràng -->
+      <div id="q-options" class="lg:col-span-6 flex flex-col justify-between gap-3 sm:gap-4"></div>
+    </div>
   </section>
 
-  <!-- 4. MÀN HÌNH KẾT QUẢ MỖI CÂU -->
-  <section id="step-result" class="hidden w-full max-w-md toon-card p-6 text-center bg-white">
-    <div id="res-emoji" class="text-6xl mb-2">🎉</div>
-    <h2 id="res-title" class="font-toon text-3xl font-extrabold mb-1">CHÍNH XÁC!</h2>
-    <p id="res-points" class="font-toon text-2xl font-extrabold text-indigo-600 mb-3">+850 điểm</p>
+  <!-- 4. MÀN HÌNH KẾT QUẢ & GIẢI THÍCH MỖI CÂU -->
+  <section id="step-result" class="hidden w-full max-w-5xl toon-card p-5 sm:p-7 bg-white">
+    <div class="flex flex-wrap items-center justify-between gap-3 pb-4 mb-5 border-b-3 border-slate-200">
+      <div class="flex items-center gap-3">
+        <div id="res-emoji" class="text-5xl">🎉</div>
+        <div>
+          <h2 id="res-title" class="font-toon text-2xl sm:text-3xl font-extrabold leading-tight">CHÍNH XÁC!</h2>
+          <p id="res-points" class="font-toon text-xl font-extrabold text-indigo-600">+850 điểm</p>
+        </div>
+      </div>
 
-    <div id="res-streak" class="hidden inline-block bg-amber-200 border-2 border-slate-800 px-3 py-1 rounded-full text-xs font-extrabold mb-4"></div>
-
-    <div class="bg-slate-100 border-2 border-slate-800 rounded-2xl p-3.5 text-sm font-bold text-slate-700 mb-4">
-      Đáp án đúng: <span id="res-correct-text" class="font-extrabold text-emerald-700"></span>
-    </div>
-
-    <div id="res-img-wrap" class="hidden mb-4">
-      <div class="text-xs font-extrabold uppercase text-purple-700 mb-1.5">💡 Hình ảnh giải thích</div>
-      <div class="w-full h-44 sm:h-52 bg-slate-100 border-3 border-slate-800 rounded-2xl overflow-hidden flex items-center justify-center">
-        <img id="res-explain-img" src="" alt="Hình giải thích" class="w-full h-full object-contain p-1.5" />
+      <div class="flex items-center gap-3">
+        <div id="res-streak" class="hidden bg-amber-200 border-2 border-slate-800 px-3 py-1 rounded-full text-xs font-extrabold"></div>
+        <div class="bg-indigo-50 border-3 border-slate-800 rounded-2xl px-4 py-2 flex items-center gap-4">
+          <div class="text-center">
+            <div class="text-[11px] font-extrabold text-slate-500 uppercase">Tổng điểm</div>
+            <div id="res-total-score" class="font-toon text-xl font-extrabold text-indigo-600">0</div>
+          </div>
+          <div class="w-0.5 h-8 bg-slate-300"></div>
+          <div class="text-center">
+            <div class="text-[11px] font-extrabold text-slate-500 uppercase">Xếp hạng</div>
+            <div id="res-rank" class="font-toon text-xl font-extrabold text-orange-500">#1</div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="bg-indigo-50 border-3 border-slate-800 rounded-2xl p-4 flex items-center justify-around">
-      <div>
-        <div class="text-xs font-extrabold text-slate-500 uppercase">Tổng điểm</div>
-        <div id="res-total-score" class="font-toon text-2xl font-extrabold text-indigo-600">0</div>
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+      <div id="res-img-wrap" class="hidden md:col-span-7">
+        <div class="text-xs font-extrabold uppercase text-purple-700 mb-2">💡 Hình ảnh giải thích</div>
+        <div class="w-full h-56 sm:h-64 bg-slate-100 border-3 border-slate-800 rounded-2xl overflow-hidden flex items-center justify-center">
+          <img id="res-explain-img" src="" alt="Hình giải thích" class="w-full h-full object-contain p-2" />
+        </div>
       </div>
-      <div class="w-0.5 h-10 bg-slate-300"></div>
-      <div>
-        <div class="text-xs font-extrabold text-slate-500 uppercase">Xếp hạng</div>
-        <div id="res-rank" class="font-toon text-2xl font-extrabold text-orange-500">#1</div>
+
+      <div class="md:col-span-5 space-y-4">
+        <div class="bg-emerald-100 border-3 border-slate-800 rounded-2xl p-4">
+          <div class="text-xs font-extrabold uppercase text-emerald-800 mb-1">Đáp án chính xác</div>
+          <div id="res-correct-text" class="font-toon text-xl font-extrabold text-slate-900"></div>
+        </div>
+        <p class="text-sm font-extrabold text-slate-500 text-center bg-slate-100 border-2 border-slate-800 rounded-xl py-3 px-4">
+          ⏳ Tự động chuyển sang câu tiếp theo sau vài giây...
+        </p>
       </div>
     </div>
-
-    <p class="text-xs font-bold text-slate-500 mt-4">⏳ Tự động chuyển sang câu tiếp theo sau vài giây...</p>
   </section>
 
   <!-- 5. MÀN HÌNH TỔNG KẾT CHUNG CUỘC -->
@@ -336,20 +378,20 @@
         }
 
         const colors = [
-          { letter: 'A', btn: 'bg-rose-400 hover:bg-rose-300 text-white' },
-          { letter: 'B', btn: 'bg-sky-400 hover:bg-sky-300 text-white' },
-          { letter: 'C', btn: 'bg-amber-400 hover:bg-amber-300 text-slate-900' },
-          { letter: 'D', btn: 'bg-emerald-400 hover:bg-emerald-300 text-slate-900' }
+          { letter: 'A', bg: 'bg-rose-400', text: 'text-white' },
+          { letter: 'B', bg: 'bg-sky-400', text: 'text-white' },
+          { letter: 'C', bg: 'bg-amber-400', text: 'text-slate-900' },
+          { letter: 'D', bg: 'bg-emerald-400', text: 'text-slate-900' }
         ];
 
         const container = document.getElementById('q-options');
         container.innerHTML = msg.options.map((opt, idx) => `
           <button type="button" id="p-opt-${idx}" onclick="sendAnswer(${idx})"
-            class="toon-btn ${colors[idx].btn} p-4 flex items-center gap-3 text-left w-full">
-            <span class="w-10 h-10 rounded-xl bg-white/90 text-slate-900 border-2 border-slate-800 font-toon text-xl font-extrabold flex items-center justify-center shrink-0">
+            class="toon-btn bg-white hover:bg-amber-50 p-3.5 sm:p-4 flex items-center gap-3.5 text-left w-full group">
+            <span class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl ${colors[idx].bg} ${colors[idx].text} border-3 border-slate-800 font-toon text-2xl font-extrabold flex items-center justify-center shrink-0 shadow-[0_3px_0_#1E293B] group-hover:scale-105 transition-transform">
               ${colors[idx].letter}
             </span>
-            <span class="font-extrabold text-base leading-snug flex-1">${escapeHTML(opt)}</span>
+            <span class="font-extrabold text-slate-800 text-base sm:text-xl leading-snug flex-1">${escapeHTML(opt)}</span>
           </button>
         `).join('');
 
@@ -364,9 +406,10 @@
           if (!btn) continue;
           btn.disabled = true;
           if (i === msg.optionIndex) {
-            btn.classList.add('ring-4', 'ring-slate-900', 'scale-[1.01]');
+            btn.classList.remove('bg-white', 'hover:bg-amber-50');
+            btn.classList.add('bg-indigo-200', 'ring-4', 'ring-indigo-500');
           } else {
-            btn.classList.add('opacity-45');
+            btn.classList.add('opacity-60');
           }
         }
         return;
@@ -376,6 +419,8 @@
         stopTimer();
         showStep('result');
         document.getElementById('badge-score').textContent = `${msg.totalScore}đ`;
+        const qScoreEl = document.getElementById('q-current-score');
+        if (qScoreEl) qScoreEl.textContent = msg.totalScore;
 
         const emoji = document.getElementById('res-emoji');
         const title = document.getElementById('res-title');
