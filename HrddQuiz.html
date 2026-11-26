@@ -2434,8 +2434,10 @@
         if (msg.index + 1 >= msg.total) {
           nextBtn.innerHTML = '<span>Xem Bảng Vàng Chung Cuộc</span> <i class="fa-solid fa-trophy"></i>';
         } else {
-          nextBtn.innerHTML = '<span>Câu Tiếp Theo</span> <i class="fa-solid fa-arrow-right"></i>';
+          nextBtn.innerHTML = '<span>Câu Tiếp Theo Ngay</span> <i class="fa-solid fa-arrow-right"></i>';
         }
+
+        startHostCountdown(msg.explanationTime || 6);
         return;
       }
 

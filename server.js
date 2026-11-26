@@ -294,6 +294,7 @@ function revealQuestion(room) {
   }
 
   const finalLeaderboard = getLeaderboard(room);
+  const explanationTime = Math.max(1, Number(room.settings.explanationTime || 6));
 
   safeSend(room.hostWs, {
     type: 'game:reveal',
@@ -305,7 +306,7 @@ function revealQuestion(room) {
     options: q.options,
     optionCounts: room.optionCounts,
     leaderboard: finalLeaderboard,
-    explanationTime: Number(room.settings.explanationTime || 6)
+    explanationTime
   });
 
   finalLeaderboard.forEach((entry, idx) => {
@@ -323,9 +324,17 @@ function revealQuestion(room) {
       totalScore: player.score,
       streak: player.streak,
       rank: idx + 1,
-      totalPlayers: finalLeaderboard.length
+      totalPlayers: finalLeaderboard.length,
+      explanationTime
     });
   });
+
+  // Tự động chuyển sang câu tiếp theo sau khi hết thời gian giải thích
+  room.timer = setTimeout(() => {
+    if (room.phase === 'explanation') {
+      startQuestion(room, room.currentIndex + 1);
+    }
+  }, explanationTime * 1000 + 250);
 }
 
 function finishRoomGame(room) {
