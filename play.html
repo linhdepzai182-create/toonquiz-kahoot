@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>ToonQuiz - Tham Gia Phòng Chơi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    body {
+      font-family: 'Nunito', sans-serif;
+      background-color: #FEF9C3;
+      background-image: radial-gradient(#FDE047 2px, transparent 2px);
+      background-size: 24px 24px;
+    }
+    h1, h2, h3, .font-toon {
+      font-family: 'Fredoka', sans-serif;
+    }
+    .toon-card {
+      border: 4px solid #1E293B;
+      box-shadow: 0 8px 0 #1E293B;
+      border-radius: 1.5rem;
+    }
+    .toon-btn {
+      border: 3px solid #1E293B;
+      box-shadow: 0 5px 0 #1E293B;
+      border-radius: 1.15rem;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+    .toon-btn:active:not(:disabled) {
+      transform: translateY(4px);
+      box-shadow: 0 1px 0 #1E293B;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-4 text-slate-800">
+
+  <!-- HEADER NHỎ -->
+  <div class="w-full max-w-md flex items-center justify-between mb-4">
+    <div class="flex items-center gap-2">
+      <div class="w-10 h-10 bg-amber-400 border-3 border-slate-800 rounded-xl shadow-[0_3px_0_#1E293B] flex items-center justify-center text-xl">🎨</div>
+      <span class="font-toon text-2xl font-extrabold">Toon<span class="text-orange-500">Quiz</span></span>
+    </div>
+    <div id="player-badge" class="hidden bg-white border-2 border-slate-800 px-3 py-1 rounded-full text-xs font-extrabold shadow-[0_2px_0_#1E293B] flex items-center gap-1.5">
+      <span id="badge-avatar">🦊</span>
+      <span id="badge-name">Player</span>
+      <span class="text-indigo-600 ml-1" id="badge-score">0đ</span>
+    </div>
+  </div>
+
+  <!-- 1. MÀN HÌNH NHẬP PIN & TÊN -->
+  <section id="step-join" class="w-full max-w-md toon-card bg-white p-6">
+    <h1 class="font-toon text-3xl font-extrabold text-center mb-1">Tham Gia Phòng</h1>
+    <p class="text-center text-sm font-bold text-slate-500 mb-5">Nhập mã PIN và tên của bạn để thi đấu cùng mọi người!</p>
+
+    <div id="join-error" class="hidden bg-rose-100 border-2 border-rose-500 text-rose-800 rounded-xl px-3.5 py-2.5 text-sm font-extrabold mb-4"></div>
+
+    <form onsubmit="submitJoin(event)" class="space-y-4">
+      <div>
+        <label class="block text-xs font-extrabold uppercase text-slate-600 mb-1">Mã PIN phòng (6 số)</label>
+        <input id="input-pin" type="text" inputmode="numeric" maxlength="6" required placeholder="VD: 482910"
+          class="w-full border-3 border-slate-800 rounded-xl px-4 py-3 font-toon text-2xl text-center tracking-widest focus:outline-none focus:ring-4 focus:ring-indigo-300" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-extrabold uppercase text-slate-600 mb-1">Tên hiển thị của bạn</label>
+        <input id="input-name" type="text" maxlength="24" required placeholder="VD: Minh Anh"
+          class="w-full border-3 border-slate-800 rounded-xl px-4 py-3 font-extrabold text-lg focus:outline-none focus:ring-4 focus:ring-amber-300" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-extrabold uppercase text-slate-600 mb-2">Chọn nhân vật đại diện</label>
+        <div id="avatar-picker" class="grid grid-cols-5 gap-2"></div>
+      </div>
+
+      <button type="submit" class="w-full toon-btn bg-indigo-500 hover:bg-indigo-400 text-white font-toon text-2xl py-3.5 mt-2">
+        VÀO PHÒNG NGAY 🚀
+      </button>
+    </form>
+  </section>
+
+  <!-- 2. MÀN HÌNH CHỜ TRONG LOBBY -->
+  <section id="step-lobby" class="hidden w-full max-w-md toon-card bg-white p-8 text-center">
+    <div id="lobby-avatar" class="text-6xl mb-3 animate-bounce">🦊</div>
+    <h2 class="font-toon text-3xl font-extrabold text-slate-800 mb-1">Bạn đã vào phòng!</h2>
+    <p class="text-slate-600 font-bold mb-5">Xin chào <span id="lobby-name" class="text-indigo-600 font-extrabold"></span></p>
+    <div class="bg-amber-100 border-3 border-slate-800 rounded-2xl p-4 font-extrabold text-slate-700">
+      ⏳ Đang chờ Host bấm bắt đầu...<br/>
+      <span class="text-xs text-slate-500">Hãy nhìn lên màn hình chính nhé!</span>
+    </div>
+  </section>
+
+  <!-- 3. MÀN HÌNH TRẢ LỜI CÂU HỎI -->
+  <section id="step-question" class="hidden w-full max-w-md space-y-4">
+    <div class="toon-card bg-white p-4">
+      <div class="flex items-center justify-between mb-2">
+        <span id="q-progress" class="bg-indigo-500 text-white font-toon text-sm px-3 py-1 rounded-lg border-2 border-slate-800">Câu 1 / 5</span>
+        <span id="q-timer-text" class="font-toon text-2xl font-extrabold text-emerald-600">15s</span>
+      </div>
+      <div class="w-full h-3 bg-slate-200 border-2 border-slate-800 rounded-full overflow-hidden mb-3">
+        <div id="q-timer-bar" class="h-full bg-emerald-400 transition-all duration-100 linear" style="width: 100%"></div>
+      </div>
+      <h2 id="q-title" class="font-toon text-xl font-extrabold text-slate-800 leading-snug"></h2>
+    </div>
+
+    <div id="q-locked-banner" class="hidden bg-indigo-100 border-3 border-slate-800 rounded-2xl p-4 text-center font-extrabold text-indigo-900">
+      🔒 Đã ghi nhận đáp án! Chờ hết giờ để xem kết quả...
+    </div>
+
+    <div id="q-options" class="grid grid-cols-1 gap-3"></div>
+  </section>
+
+  <!-- 4. MÀN HÌNH KẾT QUẢ MỖI CÂU -->
+  <section id="step-result" class="hidden w-full max-w-md toon-card p-6 text-center bg-white">
+    <div id="res-emoji" class="text-6xl mb-2">🎉</div>
+    <h2 id="res-title" class="font-toon text-3xl font-extrabold mb-1">CHÍNH XÁC!</h2>
+    <p id="res-points" class="font-toon text-2xl font-extrabold text-indigo-600 mb-3">+850 điểm</p>
+
+    <div id="res-streak" class="hidden inline-block bg-amber-200 border-2 border-slate-800 px-3 py-1 rounded-full text-xs font-extrabold mb-4"></div>
+
+    <div class="bg-slate-100 border-2 border-slate-800 rounded-2xl p-3.5 text-sm font-bold text-slate-700 mb-4">
+      Đáp án đúng: <span id="res-correct-text" class="font-extrabold text-emerald-700"></span>
+    </div>
+
+    <div class="bg-indigo-50 border-3 border-slate-800 rounded-2xl p-4 flex items-center justify-around">
+      <div>
+        <div class="text-xs font-extrabold text-slate-500 uppercase">Tổng điểm</div>
+        <div id="res-total-score" class="font-toon text-2xl font-extrabold text-indigo-600">0</div>
+      </div>
+      <div class="w-0.5 h-10 bg-slate-300"></div>
+      <div>
+        <div class="text-xs font-extrabold text-slate-500 uppercase">Xếp hạng</div>
+        <div id="res-rank" class="font-toon text-2xl font-extrabold text-orange-500">#1</div>
+      </div>
+    </div>
+
+    <p class="text-xs font-bold text-slate-500 mt-4">⏳ Chờ Host chuyển sang câu tiếp theo...</p>
+  </section>
+
+  <!-- 5. MÀN HÌNH TỔNG KẾT CHUNG CUỘC -->
+  <section id="step-finished" class="hidden w-full max-w-md toon-card bg-gradient-to-b from-white to-amber-50 p-6 text-center">
+    <div id="fin-medal" class="text-6xl mb-2">🏆</div>
+    <h2 class="font-toon text-3xl font-extrabold text-slate-800 mb-1">Hoàn Thành!</h2>
+    <p class="text-sm font-bold text-slate-600 mb-4">Thứ hạng chung cuộc của bạn</p>
+
+    <div class="bg-amber-200 border-3 border-slate-800 rounded-2xl p-4 mb-5">
+      <div id="fin-rank" class="font-toon text-4xl font-extrabold text-slate-900">#1 / 10</div>
+      <div id="fin-score" class="font-toon text-2xl font-extrabold text-indigo-700 mt-1">0 điểm</div>
+      <div id="fin-correct" class="text-xs font-extrabold text-slate-700 mt-1">Đúng 0 câu</div>
+    </div>
+
+    <div class="text-left mb-5">
+      <div class="text-xs font-extrabold uppercase text-slate-500 mb-2">Top Bảng Xếp Hạng</div>
+      <div id="fin-top-list" class="space-y-1.5 max-h-52 overflow-y-auto"></div>
+    </div>
+
+    <button onclick="location.href='/play'" class="w-full toon-btn bg-emerald-400 hover:bg-emerald-500 text-slate-900 font-toon text-xl py-3">
+      Chơi Phòng Khác
+    </button>
+  </section>
+
+  <script>
+    const AVATARS = ['🦊', '🐼', '🐸', '🦁', '🐯', '🐨', '🦄', '🐙', '🤖', '👾'];
+    let selectedAvatar = AVATARS[0];
+    let ws = null;
+    let playerId = sessionStorage.getItem('toonquiz_player_id') || null;
+    let currentPin = null;
+    let timerInterval = null;
+
+    function initAvatarPicker() {
+      const wrap = document.getElementById('avatar-picker');
+      wrap.innerHTML = AVATARS.map(av => `
+        <button type="button" onclick="pickAvatar('${av}')" data-av="${av}"
+          class="av-btn border-2 border-slate-800 rounded-xl py-2 text-2xl bg-slate-50 hover:bg-amber-100 transition ${av === selectedAvatar ? 'ring-3 ring-indigo-500 bg-amber-200' : ''}">
+          ${av}
+        </button>
+      `).join('');
+    }
+
+    function pickAvatar(av) {
+      selectedAvatar = av;
+      document.querySelectorAll('.av-btn').forEach(btn => {
+        const active = btn.dataset.av === av;
+        btn.classList.toggle('ring-3', active);
+        btn.classList.toggle('ring-indigo-500', active);
+        btn.classList.toggle('bg-amber-200', active);
+      });
+    }
+
+    function showStep(step) {
+      ['join', 'lobby', 'question', 'result', 'finished'].forEach(s => {
+        document.getElementById(`step-${s}`).classList.toggle('hidden', s !== step);
+      });
+    }
+
+    function showJoinError(msg) {
+      const el = document.getElementById('join-error');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function startTimer(durationSec) {
+      stopTimer();
+      const totalMs = durationSec * 1000;
+      const startAt = Date.now();
+      const textEl = document.getElementById('q-timer-text');
+      const barEl = document.getElementById('q-timer-bar');
+      textEl.textContent = `${durationSec}s`;
+      textEl.className = 'font-toon text-2xl font-extrabold text-emerald-600';
+      barEl.style.width = '100%';
+      barEl.className = 'h-full bg-emerald-400 transition-all duration-100 linear';
+
+      timerInterval = setInterval(() => {
+        const remainingMs = Math.max(0, totalMs - (Date.now() - startAt));
+        const sec = Math.ceil(remainingMs / 1000);
+        textEl.textContent = `${sec}s`;
+        barEl.style.width = `${(remainingMs / totalMs) * 100}%`;
+        if (sec <= 5) {
+          textEl.className = 'font-toon text-2xl font-extrabold text-rose-600';
+          barEl.className = 'h-full bg-rose-400 transition-all duration-100 linear';
+        }
+        if (remainingMs <= 0) stopTimer();
+      }, 100);
+    }
+
+    function submitJoin(e) {
+      e.preventDefault();
+      document.getElementById('join-error').classList.add('hidden');
+      const pin = document.getElementById('input-pin').value.trim();
+      const name = document.getElementById('input-name').value.trim();
+
+      if (!pin || !name) return;
+
+      const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${proto}//${location.host}`);
+
+      ws.onopen = () => {
+        ws.send(JSON.stringify({
+          type: 'player:join',
+          pin,
+          name,
+          avatar: selectedAvatar,
+          playerId
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        const msg = JSON.parse(event.data);
+        handleMessage(msg);
+      };
+
+      ws.onerror = () => {
+        showJoinError('Không thể kết nối tới máy chủ!');
+      };
+
+      ws.onclose = () => {
+        // Nếu đang chơi dở bị rớt mạng có thể báo nhẹ
+      };
+    }
+
+    function sendAnswer(idx) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      ws.send(JSON.stringify({
+        type: 'player:answer',
+        pin: currentPin,
+        playerId,
+        optionIndex: idx
+      }));
+    }
+
+    function escapeHTML(str) {
+      return String(str || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function handleMessage(msg) {
+      if (msg.type === 'player:join_error') {
+        showJoinError(msg.message);
+        return;
+      }
+
+      if (msg.type === 'player:joined') {
+        playerId = msg.playerId;
+        currentPin = msg.pin;
+        sessionStorage.setItem('toonquiz_player_id', playerId);
+
+        document.getElementById('player-badge').classList.remove('hidden');
+        document.getElementById('badge-avatar').textContent = msg.avatar;
+        document.getElementById('badge-name').textContent = msg.name;
+        document.getElementById('badge-score').textContent = `${msg.totalScore || 0}đ`;
+
+        document.getElementById('lobby-avatar').textContent = msg.avatar;
+        document.getElementById('lobby-name').textContent = msg.name;
+
+        if (msg.phase === 'lobby') {
+          showStep('lobby');
+        }
+        return;
+      }
+
+      if (msg.type === 'game:question') {
+        showStep('question');
+        document.getElementById('q-progress').textContent = `Câu ${msg.index + 1} / ${msg.total}`;
+        document.getElementById('q-title').textContent = msg.question;
+        document.getElementById('q-locked-banner').classList.add('hidden');
+
+        const colors = [
+          { letter: 'A', btn: 'bg-rose-400 hover:bg-rose-300 text-white' },
+          { letter: 'B', btn: 'bg-sky-400 hover:bg-sky-300 text-white' },
+          { letter: 'C', btn: 'bg-amber-400 hover:bg-amber-300 text-slate-900' },
+          { letter: 'D', btn: 'bg-emerald-400 hover:bg-emerald-300 text-slate-900' }
+        ];
+
+        const container = document.getElementById('q-options');
+        container.innerHTML = msg.options.map((opt, idx) => `
+          <button type="button" id="p-opt-${idx}" onclick="sendAnswer(${idx})"
+            class="toon-btn ${colors[idx].btn} p-4 flex items-center gap-3 text-left w-full">
+            <span class="w-10 h-10 rounded-xl bg-white/90 text-slate-900 border-2 border-slate-800 font-toon text-xl font-extrabold flex items-center justify-center shrink-0">
+              ${colors[idx].letter}
+            </span>
+            <span class="font-extrabold text-base leading-snug flex-1">${escapeHTML(opt)}</span>
+          </button>
+        `).join('');
+
+        startTimer(msg.durationSec);
+        return;
+      }
+
+      if (msg.type === 'player:answer_locked') {
+        document.getElementById('q-locked-banner').classList.remove('hidden');
+        for (let i = 0; i < 4; i++) {
+          const btn = document.getElementById(`p-opt-${i}`);
+          if (!btn) continue;
+          btn.disabled = true;
+          if (i === msg.optionIndex) {
+            btn.classList.add('ring-4', 'ring-slate-900', 'scale-[1.01]');
+          } else {
+            btn.classList.add('opacity-45');
+          }
+        }
+        return;
+      }
+
+      if (msg.type === 'player:result') {
+        stopTimer();
+        showStep('result');
+        document.getElementById('badge-score').textContent = `${msg.totalScore}đ`;
+
+        const emoji = document.getElementById('res-emoji');
+        const title = document.getElementById('res-title');
+        const pts = document.getElementById('res-points');
+        const streakEl = document.getElementById('res-streak');
+
+        if (msg.isCorrect) {
+          emoji.textContent = '🎉';
+          title.textContent = 'CHÍNH XÁC!';
+          title.className = 'font-toon text-3xl font-extrabold text-emerald-600 mb-1';
+          pts.textContent = `+${msg.pointsEarned} điểm`;
+        } else if (msg.answeredIndex === null) {
+          emoji.textContent = '⏰';
+          title.textContent = 'HẾT GIỜ RỒI!';
+          title.className = 'font-toon text-3xl font-extrabold text-amber-600 mb-1';
+          pts.textContent = '+0 điểm';
+        } else {
+          emoji.textContent = '😅';
+          title.textContent = 'CHƯA ĐÚNG!';
+          title.className = 'font-toon text-3xl font-extrabold text-rose-600 mb-1';
+          pts.textContent = '+0 điểm';
+        }
+
+        if (msg.streak >= 2) {
+          streakEl.textContent = `🔥 Chuỗi trả lời đúng: ${msg.streak}`;
+          streakEl.classList.remove('hidden');
+        } else {
+          streakEl.classList.add('hidden');
+        }
+
+        const letters = ['A', 'B', 'C', 'D'];
+        document.getElementById('res-correct-text').textContent = `${letters[msg.correctIndex]}. ${msg.correctText}`;
+        document.getElementById('res-total-score').textContent = msg.totalScore;
+        document.getElementById('res-rank').textContent = `#${msg.rank} / ${msg.totalPlayers}`;
+        return;
+      }
+
+      if (msg.type === 'game:finished') {
+        stopTimer();
+        showStep('finished');
+        const medals = ['🥇', '🥈', '🥉'];
+        document.getElementById('fin-medal').textContent = msg.rank <= 3 ? medals[msg.rank - 1] : '🏆';
+        document.getElementById('fin-rank').textContent = `#${msg.rank} / ${msg.totalPlayers}`;
+        document.getElementById('fin-score').textContent = `${msg.totalScore} điểm`;
+        document.getElementById('fin-correct').textContent = `Trả lời đúng ${msg.correctCount} câu`;
+
+        document.getElementById('fin-top-list').innerHTML = (msg.leaderboard || []).map((p, idx) => `
+          <div class="bg-white border-2 border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between text-sm font-extrabold">
+            <span>#${idx + 1} ${p.avatar} ${escapeHTML(p.name)}</span>
+            <span class="text-indigo-600">${p.score}đ</span>
+          </div>
+        `).join('');
+        return;
+      }
+
+      if (msg.type === 'room:closed') {
+        stopTimer();
+        alert(msg.message || 'Phòng chơi đã đóng.');
+        location.href = '/play';
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initAvatarPicker();
+      const params = new URLSearchParams(location.search);
+      const pin = params.get('pin');
+      if (pin) {
+        document.getElementById('input-pin').value = pin;
+      }
+    });
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,17 @@
+{
+  "name": "toonquiz-kahoot",
+  "version": "1.0.0",
+  "description": "ToonQuiz multiplayer Kahoot-style quiz server with QR join and live leaderboard",
+  "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "ws": "^8.18.0"
+  }
+}
+
