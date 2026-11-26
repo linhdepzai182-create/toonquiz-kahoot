@@ -1300,7 +1300,7 @@
     /**
      * 2. KHỞI TẠO & QUẢN LÝ DỮ LIỆU LOCALSTORAGE
      */
-    function loadAppData() {
+    async function loadAppData() {
       try {
         const savedQ = localStorage.getItem(STORAGE_KEY_QUESTIONS);
         if (savedQ) {
@@ -1322,6 +1322,41 @@
         questions = [...DEFAULT_QUESTIONS];
       }
       syncUIStats();
+
+      // Đồng bộ bộ câu hỏi dùng chung từ server (nếu đã có người tải lên)
+      if (location.protocol !== 'file:') {
+        try {
+          const res = await fetch('/api/quiz-data');
+          if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data.questions) && data.questions.length > 0) {
+              questions = data.questions;
+              try {
+                localStorage.setItem(STORAGE_KEY_QUESTIONS, JSON.stringify(questions));
+              } catch {}
+              if (data.settings) {
+                settings = { ...settings, ...data.settings };
+                try {
+                  localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
+                } catch {}
+              }
+              syncUIStats();
+              if (!document.getElementById('view-editor').classList.contains('hidden')) {
+                renderEditorList();
+              }
+            }
+          }
+        } catch {}
+      }
+    }
+
+    function syncQuizDataToServer() {
+      if (location.protocol === 'file:') return;
+      fetch('/api/quiz-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ questions, settings })
+      }).catch(() => {});
     }
 
     function persistQuestions() {
@@ -1331,11 +1366,13 @@
         showToast('Bộ nhớ trình duyệt đầy (ảnh quá nặng). Hãy dùng ảnh nhẹ hơn hoặc Xuất JSON!', 'error');
       }
       syncUIStats();
+      syncQuizDataToServer();
     }
 
     function persistSettings() {
       localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
       syncUIStats();
+      syncQuizDataToServer();
     }
 
     function syncUIStats() {

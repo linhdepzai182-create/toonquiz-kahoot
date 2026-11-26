@@ -8,6 +8,19 @@ const QRCode = require('qrcode');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ROOT_DIR = __dirname;
+const SHARED_QUIZ_FILE = path.join(ROOT_DIR, 'quiz-data.json');
+
+let sharedQuizData = { questions: null, settings: null, updatedAt: null };
+try {
+  if (fs.existsSync(SHARED_QUIZ_FILE)) {
+    const parsed = JSON.parse(fs.readFileSync(SHARED_QUIZ_FILE, 'utf8'));
+    if (parsed && Array.isArray(parsed.questions) && parsed.questions.length > 0) {
+      sharedQuizData = parsed;
+    }
+  }
+} catch (err) {
+  console.warn('Could not read quiz-data.json:', err.message);
+}
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -103,6 +116,51 @@ function serveFile(req, res, filePath) {
 const server = http.createServer(async (req, res) => {
   const reqUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = reqUrl.pathname;
+
+  if (pathname === '/api/quiz-data') {
+    if (req.method === 'GET') {
+      sendJSON(res, 200, sharedQuizData);
+      return;
+    }
+    if (req.method === 'POST') {
+      const MAX_BYTES = 25 * 1024 * 1024;
+      let totalBytes = 0;
+      const chunks = [];
+      req.on('data', chunk => {
+        totalBytes += chunk.length;
+        if (totalBytes <= MAX_BYTES) {
+          chunks.push(chunk);
+        } else {
+          req.destroy();
+        }
+      });
+      req.on('end', () => {
+        if (totalBytes > MAX_BYTES) {
+          sendJSON(res, 413, { error: 'Dữ liệu quá lớn (tối đa 25MB).' });
+          return;
+        }
+        try {
+          const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+          if (!body || !Array.isArray(body.questions) || body.questions.length === 0) {
+            sendJSON(res, 400, { error: 'Danh sách câu hỏi không hợp lệ.' });
+            return;
+          }
+          sharedQuizData = {
+            questions: body.questions,
+            settings: body.settings || null,
+            updatedAt: new Date().toISOString()
+          };
+          fs.writeFile(SHARED_QUIZ_FILE, JSON.stringify(sharedQuizData), err => {
+            if (err) console.warn('Failed to write quiz-data.json:', err.message);
+          });
+          sendJSON(res, 200, { ok: true, count: sharedQuizData.questions.length, updatedAt: sharedQuizData.updatedAt });
+        } catch {
+          sendJSON(res, 400, { error: 'JSON không hợp lệ.' });
+        }
+      });
+      return;
+    }
+  }
 
   if (pathname === '/api/server-info') {
     const lanIps = getLanAddresses();
