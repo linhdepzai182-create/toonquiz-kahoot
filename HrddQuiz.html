@@ -211,8 +211,8 @@
         <div class="max-w-3xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 mb-8">
           <div class="toon-card-sm bg-sky-100 p-3.5 flex items-center gap-3 text-left">
             <div class="w-11 h-11 rounded-xl bg-sky-400 border-2 border-slate-800 flex items-center justify-center text-xl shrink-0">📚</div>
-            <div>
-              <div class="text-xs font-extrabold text-slate-500 uppercase">Bộ câu hỏi</div>
+            <div class="min-w-0">
+              <div class="text-xs font-extrabold text-slate-500 uppercase truncate" id="home-deck-name">Bộ đề mẫu</div>
               <div class="font-toon text-xl font-extrabold text-slate-800"><span id="home-q-count">0</span> câu hỏi</div>
             </div>
           </div>
@@ -458,6 +458,11 @@
           </div>
 
           <div class="flex flex-wrap items-center gap-2.5">
+            <button onclick="openDeckModal('create')" class="toon-btn bg-indigo-500 hover:bg-indigo-400 text-white px-4 py-2.5 font-extrabold text-sm flex items-center gap-2">
+              <i class="fa-solid fa-folder-plus"></i>
+              <span>Tạo bộ đề</span>
+            </button>
+
             <button onclick="openQuestionForm()" class="toon-btn bg-emerald-400 hover:bg-emerald-500 text-slate-900 px-4 py-2.5 font-extrabold text-sm flex items-center gap-2">
               <i class="fa-solid fa-plus"></i>
               <span>Thêm câu hỏi mới</span>
@@ -479,6 +484,24 @@
               <span>Bộ mẫu</span>
             </button>
           </div>
+        </div>
+
+        <!-- Thanh chọn Bộ Đề -->
+        <div class="bg-indigo-50 border-3 border-slate-800 rounded-2xl p-3.5 mb-5">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-2.5">
+            <span class="text-xs font-extrabold uppercase tracking-wider text-indigo-900">
+              <i class="fa-solid fa-folder-open mr-1"></i> Chọn Bộ Đề Đang Chỉnh Sửa / Chơi
+            </span>
+            <div class="flex items-center gap-2">
+              <button onclick="openDeckModal('rename')" class="text-xs font-extrabold text-sky-700 hover:text-sky-900 bg-white border-2 border-slate-800 rounded-lg px-2.5 py-1">
+                <i class="fa-solid fa-pen"></i> Đổi tên bộ đề
+              </button>
+              <button onclick="deleteCurrentDeck()" class="text-xs font-extrabold text-rose-700 hover:text-rose-900 bg-white border-2 border-slate-800 rounded-lg px-2.5 py-1">
+                <i class="fa-solid fa-trash"></i> Xóa bộ đề
+              </button>
+            </div>
+          </div>
+          <div id="deck-tabs" class="flex flex-wrap gap-2"></div>
         </div>
 
         <!-- Danh sách câu hỏi -->
@@ -701,6 +724,24 @@
     </section>
 
   </main>
+
+  <!-- ==================== MODAL 4: TẠO / ĐỔI TÊN BỘ ĐỀ ==================== -->
+  <div id="modal-deck" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="toon-card bg-white w-full max-w-md p-6 animate-pop">
+      <h3 id="deck-modal-title" class="font-toon text-2xl font-extrabold text-slate-800 mb-3">Tạo Bộ Đề Mới</h3>
+      <form onsubmit="saveDeckModal(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-extrabold uppercase text-slate-600 mb-1">Tên bộ đề</label>
+          <input id="deck-name-input" type="text" maxlength="50" required placeholder="VD: Bộ đề Ôn tập Chương 1"
+            class="w-full border-3 border-slate-800 rounded-xl px-4 py-2.5 font-extrabold text-slate-800 focus:outline-none focus:ring-4 focus:ring-indigo-300" />
+        </div>
+        <div class="flex justify-end gap-2">
+          <button type="button" onclick="closeDeckModal()" class="toon-btn bg-slate-200 hover:bg-slate-300 text-slate-800 px-4 py-2 font-extrabold text-sm">Hủy</button>
+          <button type="submit" class="toon-btn bg-indigo-500 hover:bg-indigo-400 text-white px-5 py-2 font-extrabold text-sm">Lưu Bộ Đề</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- ==================== MODAL 1: FORM THÊM / SỬA CÂU HỎI ==================== -->
   <div id="modal-question-form" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-40 hidden flex items-center justify-center p-3 sm:p-5 overflow-y-auto">
@@ -1115,10 +1156,15 @@
 
     // Khóa lưu trữ LocalStorage
     const STORAGE_KEY_QUESTIONS = 'toonquiz_questions_v1';
+    const STORAGE_KEY_DECKS = 'toonquiz_decks_v1';
+    const STORAGE_KEY_ACTIVE_DECK = 'toonquiz_active_deck_v1';
     const STORAGE_KEY_SETTINGS = 'toonquiz_settings_v1';
 
     // Trạng thái ứng dụng toàn cục
+    let decks = [];
+    let activeDeckId = 'deck-sample';
     let questions = [];
+    let deckModalMode = 'create';
     let settings = {
       defaultAnswerTime: 15,   // Giây đếm ngược trả lời
       explanationTime: 6,      // Giây xem giải thích trước khi tự nhảy câu
@@ -1300,18 +1346,44 @@
     /**
      * 2. KHỞI TẠO & QUẢN LÝ DỮ LIỆU LOCALSTORAGE
      */
+    function getActiveDeck() {
+      let deck = decks.find(d => d.id === activeDeckId);
+      if (!deck && decks.length > 0) {
+        deck = decks[0];
+        activeDeckId = deck.id;
+      }
+      return deck || null;
+    }
+
+    function applyDecksState(loadedDecks, loadedActiveId) {
+      if (Array.isArray(loadedDecks) && loadedDecks.length > 0) {
+        decks = loadedDecks;
+      } else {
+        decks = [{ id: 'deck-sample', name: 'Bộ đề mẫu', questions: [...DEFAULT_QUESTIONS] }];
+      }
+      activeDeckId = (loadedActiveId && decks.some(d => d.id === loadedActiveId)) ? loadedActiveId : decks[0].id;
+      const active = getActiveDeck();
+      questions = active ? active.questions : [];
+    }
+
     async function loadAppData() {
       try {
-        const savedQ = localStorage.getItem(STORAGE_KEY_QUESTIONS);
-        if (savedQ) {
-          const parsed = JSON.parse(savedQ);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            questions = parsed;
-          } else {
-            questions = [...DEFAULT_QUESTIONS];
-          }
+        const savedDecks = localStorage.getItem(STORAGE_KEY_DECKS);
+        const savedActiveId = localStorage.getItem(STORAGE_KEY_ACTIVE_DECK);
+        if (savedDecks) {
+          applyDecksState(JSON.parse(savedDecks), savedActiveId);
         } else {
-          questions = [...DEFAULT_QUESTIONS];
+          const savedQ = localStorage.getItem(STORAGE_KEY_QUESTIONS);
+          if (savedQ) {
+            const parsed = JSON.parse(savedQ);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              applyDecksState([{ id: 'deck-sample', name: 'Bộ đề mẫu', questions: parsed }], 'deck-sample');
+            } else {
+              applyDecksState(null, null);
+            }
+          } else {
+            applyDecksState(null, null);
+          }
         }
 
         const savedS = localStorage.getItem(STORAGE_KEY_SETTINGS);
@@ -1319,34 +1391,45 @@
           settings = { ...settings, ...JSON.parse(savedS) };
         }
       } catch (err) {
-        questions = [...DEFAULT_QUESTIONS];
+        applyDecksState(null, null);
       }
       syncUIStats();
 
-      // Đồng bộ bộ câu hỏi dùng chung từ server (nếu đã có người tải lên)
+      // Đồng bộ bộ đề dùng chung từ server (nếu đã có người tải lên)
       if (location.protocol !== 'file:') {
         try {
           const res = await fetch('/api/quiz-data');
           if (res.ok) {
             const data = await res.json();
-            if (data && Array.isArray(data.questions) && data.questions.length > 0) {
-              questions = data.questions;
+            if (data && Array.isArray(data.decks) && data.decks.length > 0) {
+              applyDecksState(data.decks, data.activeDeckId);
+              saveLocalDecksOnly();
+            } else if (data && Array.isArray(data.questions) && data.questions.length > 0) {
+              applyDecksState([{ id: 'deck-sample', name: 'Bộ đề mẫu', questions: data.questions }], 'deck-sample');
+              saveLocalDecksOnly();
+            }
+            if (data && data.settings) {
+              settings = { ...settings, ...data.settings };
               try {
-                localStorage.setItem(STORAGE_KEY_QUESTIONS, JSON.stringify(questions));
+                localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
               } catch {}
-              if (data.settings) {
-                settings = { ...settings, ...data.settings };
-                try {
-                  localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
-                } catch {}
-              }
-              syncUIStats();
-              if (!document.getElementById('view-editor').classList.contains('hidden')) {
-                renderEditorList();
-              }
+            }
+            syncUIStats();
+            if (!document.getElementById('view-editor').classList.contains('hidden')) {
+              renderEditorList();
             }
           }
         } catch {}
+      }
+    }
+
+    function saveLocalDecksOnly() {
+      try {
+        localStorage.setItem(STORAGE_KEY_DECKS, JSON.stringify(decks));
+        localStorage.setItem(STORAGE_KEY_ACTIVE_DECK, activeDeckId);
+        localStorage.setItem(STORAGE_KEY_QUESTIONS, JSON.stringify(questions));
+      } catch (e) {
+        showToast('Bộ nhớ trình duyệt đầy (ảnh quá nặng). Hãy dùng ảnh nhẹ hơn hoặc Xuất JSON!', 'error');
       }
     }
 
@@ -1355,16 +1438,16 @@
       fetch('/api/quiz-data', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questions, settings })
+        body: JSON.stringify({ decks, activeDeckId, questions, settings })
       }).catch(() => {});
     }
 
     function persistQuestions() {
-      try {
-        localStorage.setItem(STORAGE_KEY_QUESTIONS, JSON.stringify(questions));
-      } catch (e) {
-        showToast('Bộ nhớ trình duyệt đầy (ảnh quá nặng). Hãy dùng ảnh nhẹ hơn hoặc Xuất JSON!', 'error');
+      const active = getActiveDeck();
+      if (active) {
+        active.questions = questions;
       }
+      saveLocalDecksOnly();
       syncUIStats();
       syncQuizDataToServer();
     }
@@ -1376,6 +1459,9 @@
     }
 
     function syncUIStats() {
+      const active = getActiveDeck();
+      const deckNameEl = document.getElementById('home-deck-name');
+      if (deckNameEl) deckNameEl.textContent = active ? active.name : 'Bộ đề';
       document.getElementById('nav-q-count').textContent = questions.length;
       document.getElementById('home-q-count').textContent = questions.length;
       document.getElementById('home-ans-time').textContent = settings.defaultAnswerTime;
@@ -1774,9 +1860,103 @@
     }
 
     /**
-     * 5. TRÌNH SOẠN THẢO & QUẢN LÝ BỘ CÂU HỎI (EDITOR)
+     * 5. TRÌNH SOẠN THẢO & QUẢN LÝ BỘ CÂU HỎI (EDITOR & BỘ ĐỀ)
      */
+    function renderDeckTabs() {
+      const wrap = document.getElementById('deck-tabs');
+      if (!wrap) return;
+      wrap.innerHTML = decks.map(d => {
+        const isActive = d.id === activeDeckId;
+        const count = Array.isArray(d.questions) ? d.questions.length : 0;
+        return `
+          <button type="button" onclick="switchDeck('${d.id}')"
+            class="toon-btn px-3.5 py-2 text-sm font-extrabold flex items-center gap-2 ${isActive ? 'bg-indigo-500 text-white' : 'bg-white hover:bg-amber-50 text-slate-800'}">
+            <span>📁 ${escapeHTML(d.name)}</span>
+            <span class="px-1.5 py-0.5 rounded-md text-xs ${isActive ? 'bg-white text-indigo-700' : 'bg-slate-200 text-slate-700'}">${count}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function switchDeck(deckId) {
+      const target = decks.find(d => d.id === deckId);
+      if (!target) return;
+      activeDeckId = deckId;
+      questions = target.questions || [];
+      saveLocalDecksOnly();
+      syncUIStats();
+      syncQuizDataToServer();
+      renderEditorList();
+      playSound('click');
+    }
+
+    function openDeckModal(mode = 'create') {
+      deckModalMode = mode;
+      const titleEl = document.getElementById('deck-modal-title');
+      const inputEl = document.getElementById('deck-name-input');
+      if (mode === 'rename') {
+        const active = getActiveDeck();
+        titleEl.textContent = 'Đổi Tên Bộ Đề';
+        inputEl.value = active ? active.name : '';
+      } else {
+        titleEl.textContent = 'Tạo Bộ Đề Mới';
+        inputEl.value = `Bộ đề ${decks.length + 1}`;
+      }
+      document.getElementById('modal-deck').classList.remove('hidden');
+      setTimeout(() => inputEl.select(), 50);
+    }
+
+    function closeDeckModal() {
+      document.getElementById('modal-deck').classList.add('hidden');
+    }
+
+    function saveDeckModal(e) {
+      e.preventDefault();
+      const name = document.getElementById('deck-name-input').value.trim();
+      if (!name) return;
+
+      if (deckModalMode === 'rename') {
+        const active = getActiveDeck();
+        if (active) {
+          active.name = name;
+          persistQuestions();
+          renderEditorList();
+          showToast(`Đã đổi tên thành "${name}"!`, 'success');
+        }
+      } else {
+        const newDeck = {
+          id: 'deck-' + Date.now(),
+          name,
+          questions: []
+        };
+        decks.push(newDeck);
+        activeDeckId = newDeck.id;
+        questions = newDeck.questions;
+        persistQuestions();
+        renderEditorList();
+        showToast(`Đã tạo bộ đề "${name}"! Hãy thêm câu hỏi mới nhé.`, 'success');
+      }
+      closeDeckModal();
+      playSound('correct');
+    }
+
+    function deleteCurrentDeck() {
+      if (decks.length <= 1) {
+        showToast('Cần giữ lại ít nhất 1 bộ đề!', 'error');
+        return;
+      }
+      const active = getActiveDeck();
+      decks = decks.filter(d => d.id !== activeDeckId);
+      activeDeckId = decks[0].id;
+      questions = decks[0].questions || [];
+      persistQuestions();
+      renderEditorList();
+      playSound('click');
+      showToast(`Đã xóa bộ đề "${active ? active.name : ''}"!`, 'info');
+    }
+
     function renderEditorList() {
+      renderDeckTabs();
       const container = document.getElementById('editor-list');
       container.innerHTML = '';
 
@@ -1993,10 +2173,14 @@
      * Xuất / Nhập file JSON
      */
     function exportQuestionsJSON() {
+      const active = getActiveDeck();
       const payload = {
         app: 'ToonQuiz',
+        deckName: active ? active.name : 'Bộ đề',
         settings,
-        questions
+        questions,
+        decks,
+        activeDeckId
       };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
@@ -2016,8 +2200,21 @@
       reader.onload = function (e) {
         try {
           const data = JSON.parse(e.target.result);
-          if (data && Array.isArray(data.questions) && data.questions.length > 0) {
+          if (data && Array.isArray(data.decks) && data.decks.length > 0) {
+            applyDecksState(data.decks, data.activeDeckId);
+            if (data.settings) {
+              settings = { ...settings, ...data.settings };
+              persistSettings();
+            }
+            persistQuestions();
+            renderEditorList();
+            showToast(`Đã nạp thành công ${decks.length} bộ đề!`, 'success');
+          } else if (data && Array.isArray(data.questions) && data.questions.length > 0) {
             questions = data.questions;
+            const active = getActiveDeck();
+            if (active && data.deckName) {
+              active.name = data.deckName;
+            }
             if (data.settings) {
               settings = { ...settings, ...data.settings };
               persistSettings();

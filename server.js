@@ -141,12 +141,16 @@ const server = http.createServer(async (req, res) => {
         }
         try {
           const body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-          if (!body || !Array.isArray(body.questions) || body.questions.length === 0) {
-            sendJSON(res, 400, { error: 'Danh sách câu hỏi không hợp lệ.' });
+          const hasQuestions = body && Array.isArray(body.questions) && body.questions.length > 0;
+          const hasDecks = body && Array.isArray(body.decks) && body.decks.length > 0;
+          if (!hasQuestions && !hasDecks) {
+            sendJSON(res, 400, { error: 'Danh sách câu hỏi hoặc bộ đề không hợp lệ.' });
             return;
           }
           sharedQuizData = {
-            questions: body.questions,
+            questions: hasQuestions ? body.questions : (body.decks[0]?.questions || []),
+            decks: hasDecks ? body.decks : null,
+            activeDeckId: body.activeDeckId || null,
             settings: body.settings || null,
             updatedAt: new Date().toISOString()
           };
