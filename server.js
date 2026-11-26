@@ -266,6 +266,7 @@ function startQuestion(room, index) {
       index,
       total: room.questions.length,
       question: q.question,
+      sampleImg: q.sampleImg,
       options: q.options,
       durationSec
     });
@@ -319,6 +320,7 @@ function revealQuestion(room) {
       answeredIndex: player.answeredIndex,
       correctIndex: q.correctIndex,
       correctText: q.options[q.correctIndex],
+      explainImg: q.explainImg || q.sampleImg,
       isCorrect: player.lastCorrect,
       pointsEarned: player.lastPoints,
       totalScore: player.score,
@@ -543,6 +545,7 @@ wss.on('connection', (ws) => {
           index: room.currentIndex,
           total: room.questions.length,
           question: q.question,
+          sampleImg: q.sampleImg,
           options: q.options,
           durationSec: remainingSec
         });
