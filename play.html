@@ -65,7 +65,8 @@
 <body class="min-h-screen flex flex-col items-center justify-center p-4 text-slate-800">
 
   <!-- HEADER NHỎ -->
-  <div class="w-full max-w-6xl flex items-center justify-between mb-4">
+  <div class="w-full max-w-6xl flex flex-wrap items-center justify-between gap-2 mb-4">
+    <audio id="bg-music" src="Your-friend-Steve-SnapYT.App.mp3" loop preload="auto"></audio>
     <div class="flex items-center gap-2.5">
       <div class="w-11 h-11 bg-amber-400 border-3 border-slate-800 rounded-2xl shadow-[0_3px_0_#1E293B] flex items-center justify-center text-2xl">🎨</div>
       <div>
@@ -73,10 +74,20 @@
         <span class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">Chơi Trực Tiếp (Kahoot)</span>
       </div>
     </div>
-    <div id="player-badge" class="hidden bg-white border-3 border-slate-800 px-3.5 py-1.5 rounded-2xl text-sm font-extrabold shadow-[0_3px_0_#1E293B] flex items-center gap-2">
-      <span id="badge-avatar" class="text-lg">🦊</span>
-      <span id="badge-name">Player</span>
-      <span class="text-indigo-600 ml-1" id="badge-score">0đ</span>
+    <div class="flex items-center gap-2">
+      <button id="btn-bgm" type="button" onclick="toggleBGM()" title="Bật / Tắt nhạc nền" class="toon-btn bg-pink-300 hover:bg-pink-400 text-slate-800 px-3 py-1.5 font-extrabold text-xs sm:text-sm flex items-center gap-1.5">
+        <i id="bgm-icon" class="fa-solid fa-music"></i>
+        <span class="hidden sm:inline" id="bgm-label">Nhạc: Bật</span>
+      </button>
+      <button id="btn-sound" type="button" onclick="toggleSound()" title="Bật / Tắt hiệu ứng âm thanh" class="toon-btn bg-sky-300 hover:bg-sky-400 text-slate-800 px-3 py-1.5 font-extrabold text-xs sm:text-sm flex items-center gap-1.5">
+        <i id="sound-icon" class="fa-solid fa-volume-high"></i>
+        <span class="hidden sm:inline" id="sound-label">Âm thanh: Bật</span>
+      </button>
+      <div id="player-badge" class="hidden bg-white border-3 border-slate-800 px-3.5 py-1.5 rounded-2xl text-sm font-extrabold shadow-[0_3px_0_#1E293B] flex items-center gap-2">
+        <span id="badge-avatar" class="text-lg">🦊</span>
+        <span id="badge-name">Player</span>
+        <span class="text-indigo-600 ml-1" id="badge-score">0đ</span>
+      </div>
     </div>
   </div>
 
@@ -247,6 +258,148 @@
     let playerId = sessionStorage.getItem('toonquiz_player_id') || null;
     let currentPin = null;
     let timerInterval = null;
+    let soundEnabled = true;
+    let bgmEnabled = true;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+    }
+
+    function tryPlayBGM() {
+      if (!bgmEnabled) return;
+      const bgm = document.getElementById('bg-music');
+      if (!bgm) return;
+      bgm.volume = 0.35;
+      if (bgm.paused) {
+        bgm.play().catch(() => {});
+      }
+    }
+
+    function setupBGMAutoplay() {
+      tryPlayBGM();
+      const unlock = () => {
+        initAudio();
+        if (bgmEnabled) tryPlayBGM();
+        const bgm = document.getElementById('bg-music');
+        if (!bgmEnabled || (bgm && !bgm.paused)) {
+          document.removeEventListener('click', unlock);
+          document.removeEventListener('keydown', unlock);
+          document.removeEventListener('touchstart', unlock);
+        }
+      };
+      document.addEventListener('click', unlock, { passive: true });
+      document.addEventListener('keydown', unlock, { passive: true });
+      document.addEventListener('touchstart', unlock, { passive: true });
+    }
+
+    function toggleBGM() {
+      bgmEnabled = !bgmEnabled;
+      const bgm = document.getElementById('bg-music');
+      const icon = document.getElementById('bgm-icon');
+      const label = document.getElementById('bgm-label');
+      const btn = document.getElementById('btn-bgm');
+      if (bgmEnabled) {
+        icon.className = 'fa-solid fa-music';
+        label.textContent = 'Nhạc: Bật';
+        btn.classList.replace('bg-slate-300', 'bg-pink-300');
+        btn.classList.replace('hover:bg-slate-400', 'hover:bg-pink-400');
+        if (bgm) {
+          bgm.volume = 0.35;
+          bgm.play().catch(() => {});
+        }
+        playSound('click');
+      } else {
+        icon.className = 'fa-solid fa-volume-off';
+        label.textContent = 'Nhạc: Tắt';
+        btn.classList.replace('bg-pink-300', 'bg-slate-300');
+        btn.classList.replace('hover:bg-pink-400', 'hover:bg-slate-400');
+        if (bgm) bgm.pause();
+      }
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('sound-icon');
+      const label = document.getElementById('sound-label');
+      const btn = document.getElementById('btn-sound');
+      if (soundEnabled) {
+        icon.className = 'fa-solid fa-volume-high';
+        label.textContent = 'Âm thanh: Bật';
+        btn.classList.replace('bg-slate-300', 'bg-sky-300');
+        playSound('click');
+      } else {
+        icon.className = 'fa-solid fa-volume-xmark';
+        label.textContent = 'Âm thanh: Tắt';
+        btn.classList.replace('bg-sky-300', 'bg-slate-300');
+      }
+    }
+
+    function playSound(type) {
+      if (!soundEnabled) return;
+      try {
+        initAudio();
+        if (!audioCtx) return;
+        const now = audioCtx.currentTime;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        if (type === 'click') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(520, now);
+          osc.frequency.exponentialRampToValueAtTime(780, now + 0.08);
+          gain.gain.setValueAtTime(0.18, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'tick') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(880, now);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.005, now + 0.06);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        } else if (type === 'correct') {
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.type = 'triangle';
+            o.connect(g);
+            g.connect(audioCtx.destination);
+            o.frequency.setValueAtTime(freq, now + idx * 0.09);
+            g.gain.setValueAtTime(0.22, now + idx * 0.09);
+            g.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.09 + 0.25);
+            o.start(now + idx * 0.09);
+            o.stop(now + idx * 0.09 + 0.25);
+          });
+        } else if (type === 'wrong' || type === 'timeout') {
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(280, now);
+          osc.frequency.linearRampToValueAtTime(140, now + 0.35);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+          osc.start(now);
+          osc.stop(now + 0.35);
+        } else if (type === 'next') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.exponentialRampToValueAtTime(660, now + 0.14);
+          gain.gain.setValueAtTime(0.15, now);
+          gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+          osc.start(now);
+          osc.stop(now + 0.14);
+        }
+      } catch {}
+    }
 
     function initAvatarPicker() {
       const wrap = document.getElementById('avatar-picker');
@@ -259,6 +412,7 @@
     }
 
     function pickAvatar(av) {
+      playSound('click');
       selectedAvatar = av;
       document.querySelectorAll('.av-btn').forEach(btn => {
         const active = btn.dataset.av === av;
@@ -298,21 +452,29 @@
       barEl.style.width = '100%';
       barEl.className = 'h-full bg-emerald-400 transition-all duration-100 linear';
 
+      let lastSec = durationSec;
       timerInterval = setInterval(() => {
         const remainingMs = Math.max(0, totalMs - (Date.now() - startAt));
         const sec = Math.ceil(remainingMs / 1000);
-        textEl.textContent = `${sec}s`;
-        barEl.style.width = `${(remainingMs / totalMs) * 100}%`;
-        if (sec <= 5) {
-          textEl.className = 'font-toon text-2xl font-extrabold text-rose-600';
-          barEl.className = 'h-full bg-rose-400 transition-all duration-100 linear';
+        if (sec !== lastSec) {
+          lastSec = sec;
+          textEl.textContent = `${sec}s`;
+          if (sec <= 5 && sec > 0) {
+            playSound('tick');
+            textEl.className = 'font-toon text-2xl font-extrabold text-rose-600';
+            barEl.className = 'h-full bg-rose-400 transition-all duration-100 linear';
+          }
         }
+        barEl.style.width = `${(remainingMs / totalMs) * 100}%`;
         if (remainingMs <= 0) stopTimer();
       }, 100);
     }
 
     function submitJoin(e) {
       e.preventDefault();
+      initAudio();
+      tryPlayBGM();
+      playSound('click');
       document.getElementById('join-error').classList.add('hidden');
       const pin = document.getElementById('input-pin').value.trim();
       const name = document.getElementById('input-name').value.trim();
@@ -348,6 +510,7 @@
 
     function sendAnswer(idx) {
       if (!ws || ws.readyState !== WebSocket.OPEN) return;
+      playSound('click');
       ws.send(JSON.stringify({
         type: 'player:answer',
         pin: currentPin,
@@ -390,6 +553,7 @@
 
       if (msg.type === 'game:question') {
         showStep('question');
+        playSound('next');
         document.getElementById('q-progress').textContent = `Câu ${msg.index + 1} / ${msg.total}`;
         document.getElementById('q-title').textContent = msg.question;
         document.getElementById('q-locked-banner').classList.add('hidden');
@@ -454,16 +618,19 @@
         const streakEl = document.getElementById('res-streak');
 
         if (msg.isCorrect) {
+          playSound('correct');
           emoji.textContent = '🎉';
           title.textContent = 'CHÍNH XÁC!';
           title.className = 'font-toon text-3xl font-extrabold text-emerald-600 mb-1';
           pts.textContent = `+${msg.pointsEarned} điểm`;
         } else if (msg.answeredIndex === null) {
+          playSound('timeout');
           emoji.textContent = '⏰';
           title.textContent = 'HẾT GIỜ RỒI!';
           title.className = 'font-toon text-3xl font-extrabold text-amber-600 mb-1';
           pts.textContent = '+0 điểm';
         } else {
+          playSound('wrong');
           emoji.textContent = '😅';
           title.textContent = 'CHƯA ĐÚNG!';
           title.className = 'font-toon text-3xl font-extrabold text-rose-600 mb-1';
@@ -497,6 +664,7 @@
       if (msg.type === 'game:finished') {
         stopTimer();
         showStep('finished');
+        playSound('correct');
         const medals = ['🥇', '🥈', '🥉'];
         document.getElementById('fin-medal').textContent = msg.rank <= 3 ? medals[msg.rank - 1] : '🏆';
         document.getElementById('fin-rank').textContent = `#${msg.rank} / ${msg.totalPlayers}`;
@@ -521,6 +689,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       initAvatarPicker();
+      setupBGMAutoplay();
       const params = new URLSearchParams(location.search);
       const pin = params.get('pin');
       if (pin) {
