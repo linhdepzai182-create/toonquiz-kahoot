@@ -10,14 +10,40 @@
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
+    @font-face {
+      font-family: 'DFVN Basteleur';
+      src: url('fonts/dfvn-basteleur-regular.otf') format('opentype');
+      font-weight: 100 600;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'DFVN Basteleur';
+      src: url('fonts/dfvn-basteleur-bold.otf') format('opentype');
+      font-weight: 700 900;
+      font-style: normal;
+      font-display: swap;
+    }
+    html {
+      font-size: 14px;
+    }
+    @media (min-width: 640px) {
+      html {
+        font-size: 14.5px;
+      }
+    }
+    body, button, input, textarea, select {
+      font-family: 'DFVN Basteleur', 'Nunito', sans-serif;
+    }
     body {
-      font-family: 'Nunito', sans-serif;
+      line-height: 1.45;
       background-color: #FEF9C3;
       background-image: radial-gradient(#FDE047 2px, transparent 2px);
       background-size: 24px 24px;
     }
     h1, h2, h3, .font-toon {
-      font-family: 'Fredoka', sans-serif;
+      font-family: 'DFVN Basteleur', 'Fredoka', sans-serif;
+      line-height: 1.28;
     }
     .toon-card {
       border: 4px solid #1E293B;

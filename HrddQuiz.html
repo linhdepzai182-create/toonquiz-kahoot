@@ -17,9 +17,38 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <style>
+    @font-face {
+      font-family: 'DFVN Basteleur';
+      src: url('fonts/dfvn-basteleur-regular.otf') format('opentype');
+      font-weight: 100 600;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'DFVN Basteleur';
+      src: url('fonts/dfvn-basteleur-bold.otf') format('opentype');
+      font-weight: 700 900;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    html {
+      font-size: 14px;
+    }
+    @media (min-width: 640px) {
+      html {
+        font-size: 14.5px;
+      }
+    }
+
     /* Cấu hình Font chữ chính */
+    body, button, input, textarea, select {
+      font-family: 'DFVN Basteleur', 'Nunito', sans-serif;
+    }
+
     body {
-      font-family: 'Nunito', sans-serif;
+      line-height: 1.45;
       background-color: #FFF8E7;
       background-image:
         radial-gradient(#FDE68A 2px, transparent 2px),
@@ -35,7 +64,8 @@
     h2,
     h3,
     .font-toon {
-      font-family: 'Baloo 2', cursive;
+      font-family: 'DFVN Basteleur', 'Baloo 2', cursive;
+      line-height: 1.28;
     }
 
     /* Phong cách viền & đổ bóng cứng kiểu Hoạt hình (Cartoon 3D) */
