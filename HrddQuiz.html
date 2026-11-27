@@ -1397,16 +1397,17 @@
 
       // Đồng bộ bộ đề dùng chung từ server (nếu đã có người tải lên)
       if (location.protocol !== 'file:') {
+        let hadServerData = false;
         try {
           const res = await fetch('/api/quiz-data');
           if (res.ok) {
             const data = await res.json();
             if (data && Array.isArray(data.decks) && data.decks.length > 0) {
               applyDecksState(data.decks, data.activeDeckId);
-              saveLocalDecksOnly();
+              hadServerData = true;
             } else if (data && Array.isArray(data.questions) && data.questions.length > 0) {
               applyDecksState([{ id: 'deck-sample', name: 'Bộ đề mẫu', questions: data.questions }], 'deck-sample');
-              saveLocalDecksOnly();
+              hadServerData = true;
             }
             if (data && data.settings) {
               settings = { ...settings, ...data.settings };
@@ -1414,12 +1415,36 @@
                 localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
               } catch {}
             }
-            syncUIStats();
-            if (!document.getElementById('view-editor').classList.contains('hidden')) {
-              renderEditorList();
+          }
+        } catch {}
+
+        // Đảm bảo bộ đề "Nhìn vậy mà không phải vậy" (bode2.json) luôn có sẵn trên hệ thống
+        try {
+          const b2Res = await fetch('/bode2.json');
+          if (b2Res.ok) {
+            const b2 = await b2Res.json();
+            if (b2 && Array.isArray(b2.questions) && b2.questions.length > 0) {
+              const existing = decks.find(d => d.id === 'deck-bode2');
+              if (!existing) {
+                decks.push({
+                  id: 'deck-bode2',
+                  name: 'Nhìn vậy mà không phải vậy',
+                  questions: b2.questions
+                });
+                if (!hadServerData && !localStorage.getItem(STORAGE_KEY_ACTIVE_DECK)) {
+                  activeDeckId = 'deck-bode2';
+                  questions = b2.questions;
+                }
+              }
             }
           }
         } catch {}
+
+        saveLocalDecksOnly();
+        syncUIStats();
+        if (!document.getElementById('view-editor').classList.contains('hidden')) {
+          renderEditorList();
+        }
       }
     }
 
