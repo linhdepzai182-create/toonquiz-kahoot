@@ -17,9 +17,21 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
   <style>
+    @font-face {
+      font-family: 'DFVN TAN TWINKLE';
+      src: url('fonts/dfvn-tan-twinkle.ttf') format('truetype'),
+           url('fonts/dfvn-tan-twinkle.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+
     /* Cấu hình Font chữ chính */
+    body, button, input, textarea, select {
+      font-family: 'DFVN TAN TWINKLE', 'Nunito', sans-serif;
+    }
+
     body {
-      font-family: 'Nunito', sans-serif;
       background-color: #FFF8E7;
       background-image:
         radial-gradient(#FDE68A 2px, transparent 2px),
@@ -35,7 +47,7 @@
     h2,
     h3,
     .font-toon {
-      font-family: 'Baloo 2', cursive;
+      font-family: 'DFVN TAN TWINKLE', 'Baloo 2', cursive;
     }
 
     /* Phong cách viền & đổ bóng cứng kiểu Hoạt hình (Cartoon 3D) */

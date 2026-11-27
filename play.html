@@ -10,14 +10,24 @@
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <style>
+    @font-face {
+      font-family: 'DFVN TAN TWINKLE';
+      src: url('fonts/dfvn-tan-twinkle.ttf') format('truetype'),
+           url('fonts/dfvn-tan-twinkle.otf') format('opentype');
+      font-weight: normal;
+      font-style: normal;
+      font-display: swap;
+    }
+    body, button, input, textarea, select {
+      font-family: 'DFVN TAN TWINKLE', 'Nunito', sans-serif;
+    }
     body {
-      font-family: 'Nunito', sans-serif;
       background-color: #FEF9C3;
       background-image: radial-gradient(#FDE047 2px, transparent 2px);
       background-size: 24px 24px;
     }
     h1, h2, h3, .font-toon {
-      font-family: 'Fredoka', sans-serif;
+      font-family: 'DFVN TAN TWINKLE', 'Fredoka', sans-serif;
     }
     .toon-card {
       border: 4px solid #1E293B;
