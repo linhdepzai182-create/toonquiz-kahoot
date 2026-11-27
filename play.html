@@ -18,16 +18,27 @@
       font-style: normal;
       font-display: swap;
     }
+    html {
+      font-size: 14px;
+    }
+    @media (min-width: 640px) {
+      html {
+        font-size: 14.5px;
+      }
+    }
     body, button, input, textarea, select {
       font-family: 'DFVN TAN TWINKLE', 'Nunito', sans-serif;
+      letter-spacing: 0.01em;
     }
     body {
+      line-height: 1.45;
       background-color: #FEF9C3;
       background-image: radial-gradient(#FDE047 2px, transparent 2px);
       background-size: 24px 24px;
     }
     h1, h2, h3, .font-toon {
       font-family: 'DFVN TAN TWINKLE', 'Fredoka', sans-serif;
+      line-height: 1.28;
     }
     .toon-card {
       border: 4px solid #1E293B;
